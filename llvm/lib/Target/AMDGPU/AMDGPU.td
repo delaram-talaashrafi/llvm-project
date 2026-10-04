@@ -1003,6 +1003,10 @@ defm WMMAF4Insts : AMDGPUSubtargetFeature<"wmma-f4-insts",
   "Has WMMA_*_F4 instructions"
 >;
 
+defm WMMA16x16x128FP8Insts : AMDGPUSubtargetFeature<"wmma-16x16x128fp8-insts",
+  "Has 16x16x128 FP8/BF8 WMMA instructions"
+>;
+
 defm SWMMACGfx1200Insts : AMDGPUSubtargetFeature<"swmmac-gfx1200-insts",
   "Has GFX1200 SWMMAC instructions"
 >;
@@ -1202,6 +1206,14 @@ def FeatureSupportsSRAMECC : SubtargetFeature<"sramecc-support",
   "true",
   "Hardware supports SRAMECC",
   [], InlineIgnore
+>;
+
+defm SRAMECCOnOffModes : AMDGPUSubtargetFeature<"sramecc-on-off-modes",
+  "Target supports SRAMECC on/off modes",
+  /*GenPredicate=*/1,
+  /*GenAssemblerPredicate=*/0,
+  [FeatureSupportsSRAMECC],
+  InlineIgnore
 >;
 
 defm NoSdstCMPX : AMDGPUSubtargetFeature<"no-sdst-cmpx",
@@ -2021,7 +2033,7 @@ def FeatureISAVersion9_0_MI_Common : FeatureSet<
      FeatureMAIInsts,
      FeaturePkFmacF16Inst,
      FeatureAtomicFaddNoRtnInsts,
-     FeatureSupportsSRAMECC])>;
+     FeatureSRAMECCOnOffModes])>;
 
 def FeatureISAVersion9_0_0 : FeatureSet<
   !listconcat(FeatureISAVersion9_0_Consumer_Common.Features,
@@ -2044,7 +2056,7 @@ def FeatureISAVersion9_0_6 : FeatureSet<
      FeatureDot2Insts,
      FeatureDot7Insts,
      FeatureDot10Insts,
-     FeatureSupportsSRAMECC])>;
+     FeatureSRAMECCOnOffModes])>;
 
 def FeatureISAVersion9_0_8 : FeatureSet<
   !listconcat(FeatureISAVersion9_0_MI_Common.Features,
@@ -2116,7 +2128,7 @@ def FeatureISAVersion9_4_Common : FeatureSet<
    FeatureAtomicBufferGlobalPkAddF16Insts,
    FeatureAtomicGlobalPkAddBF16Inst,
    FeatureFlatAtomicFaddF32Inst,
-   FeatureSupportsSRAMECC,
+   FeatureSRAMECCOnOffModes,
    FeaturePackedTID,
    FeatureArchitectedFlatScratch,
    FeatureFullRate64Ops,
@@ -2510,7 +2522,7 @@ def FeatureISAVersion12_50_Common : FeatureSet<
    FeaturePrngInst,
    FeaturePermlane16Swap,
    FeatureAshrPkInsts,
-   FeatureSupportsSRAMECC,
+   FeatureSRAMECCOnOffModes,
    FeatureMaxHardClauseLength63,
    FeatureWaitXcnt,
    FeatureAsynccnt,
@@ -2590,6 +2602,7 @@ def FeatureISAVersion12_50 : FeatureSet<
    FeatureLDSBankCount64,
    FeatureWMMAN16Insts,
    FeatureWMMAF4Insts,
+   FeatureWMMA16x16x128FP8Insts,
    FeatureVOP3PX2IncrementsVaVdstTwice,
    FeatureSetregVGPRMSBFixup,
    FeatureCubeInsts,
@@ -2626,6 +2639,7 @@ def FeatureISAVersion12_51 : FeatureSet<
    FeatureLDSBankCount64,
    FeatureWMMAN16Insts,
    FeatureWMMAF4Insts,
+   FeatureWMMA16x16x128FP8Insts,
    FeatureFullRate64Ops,
    FeatureVOP3PX2IncrementsVaVdstTwice,
    FeatureDPALU_DPP,
@@ -3377,10 +3391,11 @@ def AMDGPUFrontendVisibleFeatures {
   FeatureTDMInsts, FeatureTanhInsts, FeatureTensorCvtLutInsts,
   FeatureTransposeLoadF4F6Insts, FeatureVMemToLDSLoad, FeatureVmemPrefInsts,
   FeatureWaveMatchInsts, FeatureWMMA128bInsts, FeatureWMMA256bInsts,
-  FeatureWMMAN16Insts, FeatureWMMAF4Insts, FeatureXF32Insts,
+  FeatureWMMAN16Insts, FeatureWMMAF4Insts, FeatureWMMA16x16x128FP8Insts, FeatureXF32Insts,
   FeatureWavefrontSize32, FeatureWavefrontSize64, FeatureSupportsWGP,
   FeatureSupportsWave32, FeatureFastFMAF32, FeatureFastDenormalF32,
   FeatureSupportsXNACK, FeatureSupportsSRAMECC, FeatureXNACKOnOffModes,
+  FeatureSRAMECCOnOffModes,
   FeatureSGPRInitBug, FeatureApertureRegs, FeatureGetDoorbellID,
   FeatureAGPRAlloc, Feature1536VGPRs, Feature1024AddressableVGPRs,
   FeatureHalfAddressablePhysicalLocalMemory, FeatureBackOffBarrier,
