@@ -259,6 +259,44 @@ func.func @fold_on_device_not_host() attributes {acc.specialized_routine = #acc.
   return
 }
 
+acc.routine @acc_routine_on_device_if func(@fold_on_device_if) seq
+// acc.on_device(acc_device_not_host) is true on this target, so the else
+// branch in a specialized routine is dropped.
+// CHECK-LABEL: func.func @fold_on_device_if
+// CHECK-NOT:   scf.if
+// CHECK-NOT:   "test.host"
+// CHECK:       "test.device"() : () -> ()
+// CHECK:       return
+func.func @fold_on_device_if() attributes {acc.specialized_routine = #acc.specialized_routine<@acc_routine_on_device_if, <seq>, "fold_on_device_if">} {
+  %not_host = arith.constant 3 : i32
+  %on_not_host = acc.on_device %not_host : i32 -> i1
+  scf.if %on_not_host {
+    "test.device"() : () -> ()
+  } else {
+    "test.host"() : () -> ()
+  }
+  return
+}
+
+acc.routine @acc_routine_on_device_if_host func(@fold_on_device_if_host) seq
+// acc.on_device(acc_device_host) is false on this target, so the then
+// branch in a specialized routine is dropped.
+// CHECK-LABEL: func.func @fold_on_device_if_host
+// CHECK-NOT:   scf.if
+// CHECK-NOT:   "test.device"
+// CHECK:       "test.host"() : () -> ()
+// CHECK:       return
+func.func @fold_on_device_if_host() attributes {acc.specialized_routine = #acc.specialized_routine<@acc_routine_on_device_if_host, <seq>, "fold_on_device_if_host">} {
+  %host = arith.constant 2 : i32
+  %on_host = acc.on_device %host : i32 -> i1
+  scf.if %on_host {
+    "test.device"() : () -> ()
+  } else {
+    "test.host"() : () -> ()
+  }
+  return
+}
+
 // CHECK-LABEL: func.func @fold_on_device_inside_parallel
 // CHECK:       acc.parallel
 // CHECK-NOT:   acc.on_device
@@ -297,6 +335,50 @@ func.func @on_device_outside_parallel() {
   %on_host = acc.on_device %host : i32 -> i1
   "test.test"(%on_host) : (i1) -> ()
   acc.parallel {
+    acc.yield
+  }
+  return
+}
+
+// acc.on_device(acc_device_not_host) is true on this target, so the else
+// branch inside the compute construct is dropped.
+// CHECK-LABEL: func.func @fold_on_device_if_inside_parallel
+// CHECK:       acc.parallel
+// CHECK-NOT:   scf.if
+// CHECK-NOT:   "test.host"
+// CHECK:       "test.device"() : () -> ()
+// CHECK:       acc.yield
+func.func @fold_on_device_if_inside_parallel() {
+  %not_host = arith.constant 3 : i32
+  acc.parallel {
+    %on_not_host = acc.on_device %not_host : i32 -> i1
+    scf.if %on_not_host {
+      "test.device"() : () -> ()
+    } else {
+      "test.host"() : () -> ()
+    }
+    acc.yield
+  }
+  return
+}
+
+// acc.on_device(acc_device_host) is false on this target, so the then
+// branch inside the compute construct is dropped.
+// CHECK-LABEL: func.func @fold_on_device_if_host_inside_parallel
+// CHECK:       acc.parallel
+// CHECK-NOT:   scf.if
+// CHECK-NOT:   "test.device"
+// CHECK:       "test.host"() : () -> ()
+// CHECK:       acc.yield
+func.func @fold_on_device_if_host_inside_parallel() {
+  %host = arith.constant 2 : i32
+  acc.parallel {
+    %on_host = acc.on_device %host : i32 -> i1
+    scf.if %on_host {
+      "test.device"() : () -> ()
+    } else {
+      "test.host"() : () -> ()
+    }
     acc.yield
   }
   return
